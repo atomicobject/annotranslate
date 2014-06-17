@@ -98,6 +98,8 @@ module AnnoTranslate
 
     puts "  full_key=#{key}, translation=#{str}"
 
+    str = "<span title='#{full_key}'>#{str}</span>"
+
     str
   end
 
@@ -234,21 +236,6 @@ module ActionView #:nodoc:
       # default to an empty scope
       scope = []
 
-      # # Use the template for scoping if there is a templ
-      # unless self.template.nil?
-      #   # The outer scope will typically be the controller name ("blog_posts")
-      #   # but can also be a dir of shared partials ("shared").
-      #   outer_scope = self.template.base_path
-
-      #   # The template will be the view being rendered ("show.erb" or "_ad.erb")
-      #   inner_scope = self.template.name
-
-      #   # Partials template names start with underscore, which should be removed
-      #   inner_scope.sub!(/^_/, '')
-
-      #   scope = [outer_scope, inner_scope]
-      # end
-
       # Apply the parent scope to any partial keys
       key = scope_key_by_partial(key)
 
@@ -257,7 +244,6 @@ module ActionView #:nodoc:
       begin
         AnnoTranslate.translate_with_annotation(scope, key, options.merge({:raise => true}))
       rescue AnnoTranslate::AnnoTranslateError, I18n::MissingTranslationData => exc
-        puts "!!!!!!!! EXCEPTION ... reverting to default translator"
         # Call the original translate method
         str = translate_without_annotation(key, options)
 
@@ -282,7 +268,6 @@ module ActionView #:nodoc:
     private
       def scope_key_by_partial(key)
         if key.to_s.first == "."
-          puts "!!!!!!!!!!! partial key detected!!!!! : key=#{key}"
           if @virtual_path
             @virtual_path.gsub(%r{/_?}, ".") + key.to_s
           else
