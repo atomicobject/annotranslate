@@ -25,6 +25,16 @@ module AnnoTranslate
   # An optional callback to be notified when there are missing translations in views
   @@missing_translation_callback = nil
 
+  class TagHelper
+    include Singleton
+    include ActionView::Helpers::TagHelper
+    include ActionView::Helpers::AssetTagHelper
+  end
+
+  def self.tag_helper
+    TagHelper.instance
+  end
+
   # Invokes the missing translation callback, if it is defined
   def self.missing_translation_callback(exception, key, options = {}) #:nodoc:
     @@missing_translation_callback.call(exception, key, options) if !@@missing_translation_callback.nil?
@@ -99,7 +109,7 @@ module AnnoTranslate
     puts "  full_key=#{key}, translation=#{str}"
 
     # str
-    content_tag('span', str, :class => 'translation_annotated', :title => key)
+    tag_helper.content_tag('span', str, :class => 'translation_annotated', :title => key)
   end
 
   class << AnnoTranslate
