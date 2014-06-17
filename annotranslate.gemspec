@@ -9,9 +9,6 @@ Gem::Specification.new do |s|
   s.date = %q{2014-06-17}
   s.description = %q{Rails plugin which provides annotation of translatable strings}
   s.email = %q{greg.williams@atomicobject}
-  s.extra_rdoc_files = [
-    "README"
-  ]
   s.files = [
     "README.md",
     "Rakefile",
@@ -24,8 +21,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.1}
   s.summary = %q{Rails plugin which provides annotation of translatable strings}
-  s.test_files = [
-  ]
+  s.test_files = []
 
   if s.respond_to? :specification_version then
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
