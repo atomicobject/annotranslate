@@ -13,9 +13,9 @@ Gem::Specification.new do |s|
     "README"
   ]
   s.files = [
-    "README",
+    "README.md",
     "Rakefile",
-    "VERSION.yml",
+    "LICENSE",
     "lib/annotranslate.rb"
   ]
   s.has_rdoc = true
