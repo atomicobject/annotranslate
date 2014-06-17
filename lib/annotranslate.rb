@@ -98,7 +98,7 @@ module AnnoTranslate
 
     puts "  full_key=#{key}, translation=#{str}"
 
-    str = "<span title='#{full_key}'>#{str}</span>"
+    str = "<span title='#{key}'>#{str}</span>"
 
     str
   end
