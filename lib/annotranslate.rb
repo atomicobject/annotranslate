@@ -48,12 +48,55 @@ module AnnoTranslate
   def self.translate_with_annotation(key, options={})
     puts "AnnoTranslate: translate_with_annotation(key=#{key}, options=#{options.inspect}"
 
-    str = I18n.translate(key, options)
+    scope ||= [] # guard against nil scope
+
+    # Let Rails 2.3 handle keys starting with "."
+    raise AnnoTranslateError, "Skip keys with leading dot" if key.to_s.first == "."
+
+    # Keep the original options clean
+    original_scope = scope.dup
+    scoped_options = {}.merge(options)
+
+    # Raise to know if the key was found
+    scoped_options[:raise] = true
+
+    # Remove any default value when searching with scope
+    scoped_options.delete(:default)
+
+    str = nil # the string being looked for
+
+    # Loop through each scope until a string is found.
+    # Example: starts with scope of [:blog_posts :show] then tries scope [:blog_posts] then
+    # without any automatically added scope ("[]").
+    while str.nil?
+      # Set scope to use for search
+      scoped_options[:scope] = scope
+
+      begin
+        # try to find key within scope (dup the options because I18n modifies the hash)
+        str = I18n.translate(key, scoped_options.dup)
+      rescue I18n::MissingTranslationData => exc
+        # did not find the string, remove a layer of scoping.
+        # break when there are no more layers to remove (pop returns nil)
+        break if scope.pop.nil?
+      end
+    end
+
+    # If a string is not yet found, potentially check the default locale if in fallback mode.
+    if str.nil? && Translator.fallback? && (I18n.locale != I18n.default_locale) && options[:locale].nil?
+      # Recurse original request, but in the context of the default locale
+      str ||= Translator.translate_with_scope(original_scope, key, options.merge({:locale => I18n.default_locale}))
+    end
+
+    # If a string was still not found, fall back to trying original request (gets default behavior)
+    str ||= I18n.translate(key, options)
 
     # If pseudo-translating, prepend / append marker text
-    if AnnoTranslate.pseudo_translate? && !str.nil?
-      str = AnnoTranslate.pseudo_prepend + str + AnnoTranslate.pseudo_append
+    if Translator.pseudo_translate? && !str.nil?
+      str = Translator.pseudo_prepend + str + Translator.pseudo_append
     end
+
+    puts "  full_key=#{key}"
 
     str
   end
@@ -188,11 +231,28 @@ module ActionView #:nodoc:
     # context-aware of what view (or partial) is being rendered.
     # Initial scoping will be scoped to [:controller_name :view_name]
     def translate_with_annotation(key, options={})
+      # default to an empty scope
+      scope = []
+
+      # Use the template for scoping if there is a templ
+      unless self.template.nil?
+        # The outer scope will typically be the controller name ("blog_posts")
+        # but can also be a dir of shared partials ("shared").
+        outer_scope = self.template.base_path
+
+        # The template will be the view being rendered ("show.erb" or "_ad.erb")
+        inner_scope = self.template.name
+
+        # Partials template names start with underscore, which should be removed
+        inner_scope.sub!(/^_/, '')
+
+        scope = [outer_scope, inner_scope]
+      end
 
       # In the case of a missing translation, fall back to letting TranslationHelper
       # put in span tag for a translation_missing.
       begin
-        AnnoTranslate.translate_with_annotation(key, options.merge({:raise => true}))
+        AnnoTranslate.translate_with_annotation(scope, key, options.merge({:raise => true}))
       rescue AnnoTranslate::AnnoTranslateError, I18n::MissingTranslationData => exc
         # Call the original translate method
         str = translate_without_annotation(key, options)
@@ -222,7 +282,7 @@ module ActionController #:nodoc:
 
     # Add a +translate+ (or +t+) method to ActionController
     def translate_with_annotation(key, options={})
-      AnnoTranslate.translate_with_annotation(key, options)
+      AnnoTranslate.translate_with_annotation([self.controller_name, self.action_name], key, options)
     end
 
     alias_method_chain :translate, :annotation
@@ -234,7 +294,7 @@ module ActiveRecord #:nodoc:
   class Base
     # Add a +translate+ (or +t+) method to ActiveRecord
     def translate(key, options={})
-      AnnoTranslate.translate_with_annotation(key, options)
+      AnnoTranslate.translate_with_annotation([self.class.name.underscore], key, options)
     end
 
     alias :t :translate
@@ -243,7 +303,7 @@ module ActiveRecord #:nodoc:
     class << Base
 
       def translate(key, options={}) #:nodoc:
-        AnnoTranslate.translate_with_annotation(key, options)
+        AnnoTranslate.translate_with_annotation([self.name.underscore], key, options)
       end
 
       alias :t :translate
@@ -256,7 +316,7 @@ module ActionMailer #:nodoc:
 
     # Add a +translate+ (or +t+) method to ActionMailer
     def translate(key, options={})
-      AnnoTranslate.translate_with_annotation(key, options)
+      AnnoTranslate.translate_with_annotation([self.mailer_name, self.action_name], key, options)
     end
 
     alias :t :translate
