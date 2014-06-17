@@ -96,7 +96,7 @@ module AnnoTranslate
       str = AnnoTranslate.pseudo_prepend + str + AnnoTranslate.pseudo_append
     end
 
-    puts "  full_key=#{key}"
+    puts "  full_key=#{key}, translation=#{str}"
 
     str
   end
