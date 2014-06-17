@@ -83,17 +83,17 @@ module AnnoTranslate
     end
 
     # If a string is not yet found, potentially check the default locale if in fallback mode.
-    if str.nil? && Translator.fallback? && (I18n.locale != I18n.default_locale) && options[:locale].nil?
+    if str.nil? && AnnoTranslate.fallback? && (I18n.locale != I18n.default_locale) && options[:locale].nil?
       # Recurse original request, but in the context of the default locale
-      str ||= Translator.translate_with_scope(original_scope, key, options.merge({:locale => I18n.default_locale}))
+      str ||= AnnoTranslate.translate_with_scope(original_scope, key, options.merge({:locale => I18n.default_locale}))
     end
 
     # If a string was still not found, fall back to trying original request (gets default behavior)
     str ||= I18n.translate(key, options)
 
     # If pseudo-translating, prepend / append marker text
-    if Translator.pseudo_translate? && !str.nil?
-      str = Translator.pseudo_prepend + str + Translator.pseudo_append
+    if AnnoTranslate.pseudo_translate? && !str.nil?
+      str = AnnoTranslate.pseudo_prepend + str + AnnoTranslate.pseudo_append
     end
 
     puts "  full_key=#{key}"
