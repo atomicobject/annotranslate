@@ -4,11 +4,11 @@ require 'action_view/helpers/translation_helper'
 # Extentions to make internationalization (i18n) of a Rails application simpler.
 # Support the method +translate+ (or shorter +t+) in models/view/controllers/mailers.
 module AnnoTranslate
-  # Error for use within Translator
+  # Error for use within AnnoTranslate
   class AnnoTranslateError < StandardError #:nodoc:
   end
 
-  # Translator version
+  # AnnoTranslate version
   VERSION = '1.0.0'
 
   # Whether to pseudo-translate all fetched strings
@@ -58,7 +58,7 @@ module AnnoTranslate
     str
   end
 
-  class << Translator
+  class << AnnoTranslate
 
     # Generic translate method that mimics <tt>I18n.translate</tt> (e.g. no automatic scoping) but includes locale fallback
     # and strict mode behavior.
