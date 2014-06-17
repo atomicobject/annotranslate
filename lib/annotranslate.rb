@@ -46,6 +46,8 @@ module AnnoTranslate
   end
 
   def self.translate_with_annotation(key, options={})
+    puts "AnnoTranslate: translate_with_annotation(key=#{key}, options=#{options.inspect}"
+
     str = I18n.translate(key, options)
 
     # If pseudo-translating, prepend / append marker text
