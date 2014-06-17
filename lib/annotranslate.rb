@@ -45,8 +45,8 @@ module AnnoTranslate
     @@missing_translation_callback = block
   end
 
-  def self.translate_with_annotation(key, options={})
-    puts "AnnoTranslate: translate_with_annotation(key=#{key}, options=#{options.inspect}"
+  def self.translate_with_annotation(scope, key, options={})
+    puts "AnnoTranslate: translate_with_annotation(scope=#{scope}, key=#{key}, options=#{options.inspect}"
 
     scope ||= [] # guard against nil scope
 
