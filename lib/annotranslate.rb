@@ -46,7 +46,7 @@ module AnnoTranslate
   end
 
   def self.translate_with_annotation(scope, key, options={})
-    puts "AnnoTranslate: translate_with_annotation(scope=#{scope}, key=#{key}, options=#{options.inspect}"
+    puts "AnnoTranslate: translate_with_annotation(scope=#{scope}, key=#{key}, options=#{options.inspect})"
 
     scope ||= [] # guard against nil scope
 
@@ -249,6 +249,9 @@ module ActionView #:nodoc:
       #   scope = [outer_scope, inner_scope]
       # end
 
+      # Apply the parent scope to any partial keys
+      key = scope_key_by_partial(key)
+
       # In the case of a missing translation, fall back to letting TranslationHelper
       # put in span tag for a translation_missing.
       begin
@@ -274,6 +277,19 @@ module ActionView #:nodoc:
 
     alias_method_chain :translate, :annotation
     alias :t :translate
+
+    private
+      def scope_key_by_partial(key)
+        if key.to_s.first == "."
+          if @virtual_path
+            @virtual_path.gsub(%r{/_?}, ".") + key.to_s
+          else
+            raise "Cannot use t(#{key.inspect}) shortcut because path is not available"
+          end
+        else
+          key
+        end
+      end
   end
 end
 
