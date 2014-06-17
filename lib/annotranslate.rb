@@ -51,7 +51,7 @@ module AnnoTranslate
     scope ||= [] # guard against nil scope
 
     # Let Rails 2.3 handle keys starting with "."
-    raise AnnoTranslateError, "Skip keys with leading dot" if key.to_s.first == "."
+    # raise AnnoTranslateError, "Skip keys with leading dot" if key.to_s.first == "."
 
     # Keep the original options clean
     original_scope = scope.dup
@@ -257,6 +257,7 @@ module ActionView #:nodoc:
       begin
         AnnoTranslate.translate_with_annotation(scope, key, options.merge({:raise => true}))
       rescue AnnoTranslate::AnnoTranslateError, I18n::MissingTranslationData => exc
+        puts "!!!!!!!! EXCEPTION ... reverting to default translator"
         # Call the original translate method
         str = translate_without_annotation(key, options)
 
@@ -281,6 +282,7 @@ module ActionView #:nodoc:
     private
       def scope_key_by_partial(key)
         if key.to_s.first == "."
+          puts "!!!!!!!!!!! partial key detected!!!!! : key=#{key}"
           if @virtual_path
             @virtual_path.gsub(%r{/_?}, ".") + key.to_s
           else
