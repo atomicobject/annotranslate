@@ -98,9 +98,8 @@ module AnnoTranslate
 
     puts "  full_key=#{key}, translation=#{str}"
 
-    str = "<span title='#{key}'>#{str}</span>"
-
-    str
+    # str
+    content_tag('span', str, :class => 'translation_annotated', :title => key)
   end
 
   class << AnnoTranslate
