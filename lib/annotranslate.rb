@@ -359,6 +359,13 @@ end
 module I18n
   # Install the strict exception handler for testing
   extend AnnoTranslate::I18nExtensions
+
+  # Override +translate+ (and +t+) method to I18n
+  def translate(key, options={})
+    AnnoTranslate.translate_with_annotation([], @virtual_path, key, options)
+  end
+
+  alias :t :translate
 end
 
 module Test # :nodoc: all
