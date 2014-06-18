@@ -11,7 +11,7 @@ module AnnoTranslate
   end
 
   # AnnoTranslate version
-  VERSION = '1.0.0'
+  VERSION = '0.1.0'
 
   # Define empty logger until instanced
   @@log_file = nil
@@ -36,7 +36,7 @@ module AnnoTranslate
     # Create logger if it doesn't exist yet
     if @@logger.nil?
       log_file = Rails.root.join('log', 'annotranslate.log').to_s
-      puts "AnnoTranslate is logging to: #{@@log_file}"
+      puts "AnnoTranslate is logging to: #{log_file}"
       @@logger = Logger.new(File.open(log_file, "w", encoding: 'UTF-8'))
       @@logger.info "Started new AnnoTranslate logging session!"
     end
@@ -74,8 +74,8 @@ module AnnoTranslate
     @@missing_translation_callback = block
   end
 
-  def self.translate_with_annotation(scope, key, options={})
-    AnnoTranslate.log.info "AnnoTranslate: translate_with_annotation(scope=#{scope}, key=#{key}, options=#{options.inspect})"
+  def self.translate_with_annotation(scope, path, key, options={})
+    AnnoTranslate.log.info "translate_with_annotation(scope=#{scope}, path=#{path}, key=#{key}, options=#{options.inspect})"
 
     scope ||= [] # guard against nil scope
 
@@ -93,6 +93,9 @@ module AnnoTranslate
     scoped_options.delete(:default)
 
     str = nil # the string being looked for
+
+    # Apply scoping to partial keys
+    key = AnnoTranslate.scope_key_by_partial(key, path)
 
     # Loop through each scope until a string is found.
     # Example: starts with scope of [:blog_posts :show] then tries scope [:blog_posts] then
@@ -130,12 +133,26 @@ module AnnoTranslate
     tag
   end
 
+  def self.scope_key_by_partial(key, path)
+    if key.to_s.first == "."
+      if path
+        path.gsub(%r{/_?}, ".") + key.to_s
+      else
+        error = "Cannot use t(#{key.inspect}) shortcut because path is not available"
+        AnnoTranslate.log.error error
+        raise error
+      end
+    else
+      key
+    end
+  end
+
   class << AnnoTranslate
 
     # Generic translate method that mimics <tt>I18n.translate</tt> (e.g. no automatic scoping) but includes locale fallback
     # and strict mode behavior.
     def translate(key, options={})
-      AnnoTranslate.translate_with_annotation(key, options)
+      AnnoTranslate.translate_with_annotation(key, @virtual_path, options)
     end
 
     alias :t :translate
@@ -235,7 +252,9 @@ module AnnoTranslate
         assert(true, msg)
       rescue I18n::MissingTranslationData => e
         # Fail!
-        assert_block(build_message(msg, "Exception raised:\n?", e)) {false}
+        error = build_message(msg, "Exception raised:\n?", e)
+        AnnoTranslate.log.error
+        assert_block(error) {false}
       ensure
         # uninstall strict exception handler
         AnnoTranslate.strict_mode(false)
@@ -263,13 +282,10 @@ module ActionView #:nodoc:
       # default to an empty scope
       scope = []
 
-      # Apply the parent scope to any partial keys
-      key = scope_key_by_partial(key)
-
       # In the case of a missing translation, fall back to letting TranslationHelper
       # put in span tag for a translation_missing.
       begin
-        AnnoTranslate.translate_with_annotation(scope, key, options.merge({:raise => true}))
+        AnnoTranslate.translate_with_annotation(scope, @virtual_path, key, options.merge({:raise => true}))
       rescue AnnoTranslate::AnnoTranslateError, I18n::MissingTranslationData => exc
         # Call the original translate method
         str = translate_without_annotation(key, options)
@@ -291,19 +307,6 @@ module ActionView #:nodoc:
 
     alias_method_chain :translate, :annotation
     alias :t :translate
-
-    private
-      def scope_key_by_partial(key)
-        if key.to_s.first == "."
-          if @virtual_path
-            @virtual_path.gsub(%r{/_?}, ".") + key.to_s
-          else
-            raise "Cannot use t(#{key.inspect}) shortcut because path is not available"
-          end
-        else
-          key
-        end
-      end
   end
 end
 
@@ -312,7 +315,7 @@ module ActionController #:nodoc:
 
     # Add a +translate+ (or +t+) method to ActionController
     def translate_with_annotation(key, options={})
-      AnnoTranslate.translate_with_annotation([self.controller_name, self.action_name], key, options)
+      AnnoTranslate.translate_with_annotation([self.controller_name, self.action_name], @virtual_path, key, options)
     end
 
     alias_method_chain :translate, :annotation
@@ -324,7 +327,7 @@ module ActiveRecord #:nodoc:
   class Base
     # Add a +translate+ (or +t+) method to ActiveRecord
     def translate(key, options={})
-      AnnoTranslate.translate_with_annotation([self.class.name.underscore], key, options)
+      AnnoTranslate.translate_with_annotation([self.class.name.underscore], @virtual_path, key, options)
     end
 
     alias :t :translate
@@ -333,7 +336,7 @@ module ActiveRecord #:nodoc:
     class << Base
 
       def translate(key, options={}) #:nodoc:
-        AnnoTranslate.translate_with_annotation([self.name.underscore], key, options)
+        AnnoTranslate.translate_with_annotation([self.name.underscore], @virtual_path, key, options)
       end
 
       alias :t :translate
@@ -346,7 +349,7 @@ module ActionMailer #:nodoc:
 
     # Add a +translate+ (or +t+) method to ActionMailer
     def translate(key, options={})
-      AnnoTranslate.translate_with_annotation([self.mailer_name, self.action_name], key, options)
+      AnnoTranslate.translate_with_annotation([self.mailer_name, self.action_name], @virtual_path, key, options)
     end
 
     alias :t :translate
