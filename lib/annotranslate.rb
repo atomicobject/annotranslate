@@ -23,7 +23,7 @@ module AnnoTranslate
   @@pseudo_append = "]"
 
   # Create empty log file and log methods for appending
-  @@log_file = File.join(File.expand_path(File.dirname(__HERE__)), "annotranslate.log")
+  @@log_file = File.join(File.expand_path(File.dirname(__FILE__)), "annotranslate.log")
   File.open(@@log_file, "w", encoding: 'UTF-8'){}
   def self.logs(msg)
     File.open(@@log_file, "a", encoding: 'UTF-8'){|l| log.puts msg}
