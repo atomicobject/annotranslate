@@ -13,6 +13,10 @@ module AnnoTranslate
   # AnnoTranslate version
   VERSION = '1.0.0'
 
+  # Define empty logger until instanced
+  @@log_file = nil
+  @@logger = nil
+
   # Whether to pseudo-translate all fetched strings
   @@pseudo_translate = false
 
@@ -114,8 +118,15 @@ module AnnoTranslate
 
     # Plugin-specific Rails logger
     def logger
-      @log_file ||= Rails.root.join('log', 'annotranslate.log').to_s
-      @logger ||= Logger.new(File.open(@log_file, "w", encoding: 'UTF-8'))
+      # Create logger if it doesn't exist yet
+      if !@@logger
+        log_file = Rails.root.join('log', 'annotranslate.log').to_s
+        puts "AnnoTranslate is logging to: #{@@log_file}"
+        @@logger = Logger.new(File.open(log_file, "w", encoding: 'UTF-8'))
+        @@logger.info "Started AnnoTranslate logging."
+      end
+      # Return the logger instance
+      @@logger
     end
 
     # Generic translate method that mimics <tt>I18n.translate</tt> (e.g. no automatic scoping) but includes locale fallback
