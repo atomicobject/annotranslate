@@ -376,6 +376,14 @@ module I18n
   alias :t :translate
 end
 
+module ActiveSupport
+  module Inflector
+    def humanize((lower_case_and_underscored_word, options = {})
+      raise "ActiveSupport::Inflector.humanize is disabled!"
+    end
+  end
+end
+
 module Test # :nodoc: all
   module Unit
     class TestCase
