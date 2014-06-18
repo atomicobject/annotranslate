@@ -360,6 +360,14 @@ module I18n
   # Install the strict exception handler for testing
   extend AnnoTranslate::I18nExtensions
 
+  module Backend
+    module Fallbacks
+      def translate(locale, key, options={})
+        AnnoTranslate.translate_with_annotation([], @virtual_path, key, options)
+      end
+    end
+  end
+
   # Override +translate+ (and +t+) method to I18n
   def translate(key, options={})
     AnnoTranslate.translate_with_annotation([], @virtual_path, key, options)
