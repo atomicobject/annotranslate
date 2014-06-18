@@ -24,10 +24,6 @@ module AnnoTranslate
   # Used as a visible marker. Default is "]"
   @@pseudo_append = "]"
 
-  # Create empty log file and log methods for appending
-  @@log_file = Rails.root.join('log', 'annotranslate.log')
-  @@logger = Logger.new(File.open(@@log_file, "w", encoding: 'UTF-8'))
-
   # An optional callback to be notified when there are missing translations in views
   @@missing_translation_callback = nil
 
@@ -62,7 +58,6 @@ module AnnoTranslate
   end
 
   def self.translate_with_annotation(scope, key, options={})
-    @@logger.info "AnnoTranslate: translate_with_annotation(scope=#{scope}, key=#{key}, options=#{options.inspect})"
 
     scope ||= [] # guard against nil scope
 
@@ -112,16 +107,23 @@ module AnnoTranslate
       str = AnnoTranslate.pseudo_prepend + str + AnnoTranslate.pseudo_append
     end
 
-    @@logger.info "  => full_key=#{key}, translation=#{str}"
     tag_helper.content_tag('span', str, :class => 'translation_annotated', :title => key)
   end
 
   class << AnnoTranslate
 
+    # Plugin-specific Rails logger
+    def logger
+      @log_file ||= Rails.root.join('log', 'annotranslate.log').to_s
+      @logger ||= Logger.new(File.open(@log_file, "w", encoding: 'UTF-8'))
+    end
+
     # Generic translate method that mimics <tt>I18n.translate</tt> (e.g. no automatic scoping) but includes locale fallback
     # and strict mode behavior.
     def translate(key, options={})
+      logger.info "AnnoTranslate: translate_with_annotation(scope=#{scope}, key=#{key}, options=#{options.inspect})"
       AnnoTranslate.translate_with_annotation(key, options)
+      logger.info "  => full_key=#{key}, translation=#{str}"
     end
 
     alias :t :translate
