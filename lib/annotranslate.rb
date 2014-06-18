@@ -1,5 +1,6 @@
 require 'active_support'
 require 'action_view/helpers/translation_helper'
+require 'logger'
 
 # Extentions to make internationalization (i18n) of a Rails application simpler.
 # Support the method +translate+ (or shorter +t+) in models/view/controllers/mailers.
@@ -23,14 +24,8 @@ module AnnoTranslate
   @@pseudo_append = "]"
 
   # Create empty log file and log methods for appending
-  @@log_file = File.join(File.expand_path(File.dirname(__FILE__)), "annotranslate.log")
-  File.open(@@log_file, "w", encoding: 'UTF-8'){}
-  def self.logs(msg)
-    File.open(@@log_file, "a", encoding: 'UTF-8'){|log| log.puts msg}
-  end
-  def self.log(msg)
-    File.open(@@log_file, "a", encoding: 'UTF-8'){|log| log.print msg}
-  end
+  @@log_file = File.join(File.expand_path(Rails.root, 'log', 'annotranslate.log'))
+  @@logger = Logger.new(File.open(@@log_file, "w", encoding: 'UTF-8'))
 
   # An optional callback to be notified when there are missing translations in views
   @@missing_translation_callback = nil
@@ -66,7 +61,7 @@ module AnnoTranslate
   end
 
   def self.translate_with_annotation(scope, key, options={})
-    self.log "AnnoTranslate: translate_with_annotation(scope=#{scope}, key=#{key}, options=#{options.inspect})"
+    @@logger.info "AnnoTranslate: translate_with_annotation(scope=#{scope}, key=#{key}, options=#{options.inspect})"
 
     scope ||= [] # guard against nil scope
 
@@ -116,7 +111,7 @@ module AnnoTranslate
       str = AnnoTranslate.pseudo_prepend + str + AnnoTranslate.pseudo_append
     end
 
-    self.logs " => full_key=#{key}, translation=#{str}"
+    @@logger.info "  => full_key=#{key}, translation=#{str}"
     tag_helper.content_tag('span', str, :class => 'translation_annotated', :title => key)
   end
 
