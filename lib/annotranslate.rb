@@ -24,7 +24,7 @@ module AnnoTranslate
   @@pseudo_append = "]"
 
   # Create empty log file and log methods for appending
-  @@log_file = File.join(File.expand_path(Rails.root, 'log', 'annotranslate.log'))
+  @@log_file = File.join(Rails.root, 'log', 'annotranslate.log')
   @@logger = Logger.new(File.open(@@log_file, "w", encoding: 'UTF-8'))
 
   # An optional callback to be notified when there are missing translations in views
