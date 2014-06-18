@@ -22,6 +22,16 @@ module AnnoTranslate
   # Used as a visible marker. Default is "]"
   @@pseudo_append = "]"
 
+  # Create empty log file and log methods for appending
+  @@log_file = File.join(File.expand_path(File.dirname(__HERE__)), "annotranslate.log")
+  File.open(@@log_file, "w", encoding: 'UTF-8'){}
+  def self.logs(msg)
+    File.open(@@log_file, "a", encoding: 'UTF-8'){|l| log.puts msg}
+  end
+  def self.log(msg)
+    File.open(@@log_file, "a", encoding: 'UTF-8'){|l| log.print msg}
+  end
+
   # An optional callback to be notified when there are missing translations in views
   @@missing_translation_callback = nil
 
@@ -56,7 +66,7 @@ module AnnoTranslate
   end
 
   def self.translate_with_annotation(scope, key, options={})
-    puts "AnnoTranslate: translate_with_annotation(scope=#{scope}, key=#{key}, options=#{options.inspect})"
+    self.log "AnnoTranslate: translate_with_annotation(scope=#{scope}, key=#{key}, options=#{options.inspect})"
 
     scope ||= [] # guard against nil scope
 
@@ -106,9 +116,7 @@ module AnnoTranslate
       str = AnnoTranslate.pseudo_prepend + str + AnnoTranslate.pseudo_append
     end
 
-    puts "  full_key=#{key}, translation=#{str}"
-
-    # str
+    self.logs " => full_key=#{key}, translation=#{str}"
     tag_helper.content_tag('span', str, :class => 'translation_annotated', :title => key)
   end
 
