@@ -1,17 +1,19 @@
+$LOAD_PATH.unshift File.expand_path(File.dirname(__FILE__))
+
 require 'rails/all'
 require 'active_support'
 require 'action_view/helpers/translation_helper'
 require 'logger'
+require 'import_export'
+require 'version'
 
 # Extentions to make internationalization (i18n) of a Rails application simpler.
 # Support the method +translate+ (or shorter +t+) in models/view/controllers/mailers.
 module AnnoTranslate
+
   # Error for use within AnnoTranslate
   class AnnoTranslateError < StandardError #:nodoc:
   end
-
-  # AnnoTranslate version
-  VERSION = '0.1.0'
 
   # Define empty logger until instanced
   @@log_file = nil
@@ -378,7 +380,7 @@ end
 
 module ActiveSupport
   module Inflector
-    def humanize((lower_case_and_underscored_word, options = {})
+    def humanize(lower_case_and_underscored_word, options = {})
       raise "ActiveSupport::Inflector.humanize is disabled!"
     end
   end
