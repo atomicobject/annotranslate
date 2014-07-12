@@ -1,6 +1,6 @@
 require 'yaml'
 require 'csv'
-require 'fileutils'
+require 'rake'
 
 module AnnoTranslate
 
